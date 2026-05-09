@@ -4,17 +4,17 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#f3e2ba" />
-<title>CuiMao AI - 眼神跟随</title>
+<title>Big Sister is Watching You</title>
 <meta name="description" content="移动鼠标，画面里的她就会一直看着你。" />
 <style>
   :root {
-    --bg-fallback: #f3e2ba;
-    --ink: #2a1a0e;
-    --ink-soft: #6b4f3a;
-    --accent: #c8703f;
-    --matte: #fbf2dd;
-    --ring-dark: #c8703f;
-    --shadow: rgba(40, 24, 12, 0.30);
+    --bg-fallback: #f3e2ba;        /* bg.png 加载失败时的兜底米黄 */
+    --ink:        #2a1a0e;         /* 深棕，主要文字 */
+    --ink-soft:   #6b4f3a;         /* 柔和棕色，次要文字 */
+    --accent:     #c8703f;         /* 与 cursor.png 的橙色呼应 */
+    --matte:      #fbf2dd;         /* 圆形画框内的暖奶油底（比 bg 更亮，区隔人物与背景）*/
+    --ring-dark:  #c8703f;                 /* 圆环描边（橙色，与 cursor.png 呼应）*/
+    --shadow:     rgba(40, 24, 12, 0.30); /* 人物投影 */
   }
 
   * { box-sizing: border-box; }
@@ -25,7 +25,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: var(--bg-fallback);
+    background: var(--bg-fallback) url('bg.png') no-repeat center / cover fixed;
     color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue",
                  "Microsoft YaHei", "Segoe UI", sans-serif;
@@ -48,31 +48,35 @@
     justify-content: center;
   }
 
-  /* Portrait: sprite sheet */
+  /* 人像容器：sprite 透明背景 + 仅柔和投影（圆环画在 ::after 上）*/
   .portrait {
     position: relative;
     width: min(72vmin, 600px);
     height: min(72vmin, 600px);
     border-radius: 50%;
-    background: url('sprite.webp') no-repeat 0% 0% / 400% 400%;
+    background: url('sprite.webp') no-repeat 0% 0% / 1300% 1200%;
     will-change: background-position;
     transform: translateZ(0);
     image-rendering: -webkit-optimize-contrast;
-    box-shadow: 0 22px 50px var(--shadow), 0 4px 10px rgba(40, 24, 12, 0.18);
+    box-shadow:
+      0 22px 50px var(--shadow),
+      0 4px 10px rgba(40, 24, 12, 0.18);
   }
 
-  /* Ring overlay */
+  /* 圆环：60px 宽，整体再向内缩进 20px，紧贴人物轮廓。
+     单独放在 ::after 上 + z-index 高于 frame_front，
+     NEAR 模式叠加高清正面图时圆环依然保持在最上层。*/
   .portrait::after {
     content: '';
     position: absolute;
-    inset: 20px;
+    inset: 20px;                     /* 比容器小 20px，把环整体向内平移 */
     border-radius: 50%;
     pointer-events: none;
     box-shadow: inset 0 0 0 60px var(--ring-dark);
     z-index: 2;
   }
 
-  /* Near mode: front view */
+  /* 高清"正面凝视"图层：NEAR 模式时叠加显示 */
   .portrait-front {
     position: absolute;
     inset: 0;
@@ -87,7 +91,7 @@
   }
   .portrait-front.show { opacity: 1; }
 
-  /* Title bar */
+  /* 顶部标题 */
   .top-bar, .bottom-bar {
     position: fixed;
     left: 0;
@@ -142,26 +146,28 @@
   }
   .hint.fade { opacity: 0.4; }
 
-  /* Custom cursor */
+  /* 自定义光标：cursor.png 即时跟手 */
   .cursor {
     position: fixed;
     top: 0;
     left: 0;
-    width: 20px;
-    height: 20px;
-    margin-top: -10px;
-    margin-left: -10px;
-    background: var(--accent);
-    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    margin-top: -2px;
+    margin-left: -2px;
+    background-image: url('cursor.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
     pointer-events: none;
     z-index: 100;
     will-change: transform;
     transform: translate3d(-100px, -100px, 0);
     transition: none;
-    box-shadow: 0 0 10px rgba(200, 112, 63, 0.7);
+    filter: drop-shadow(0 4px 8px rgba(60, 30, 12, 0.45));
   }
 
-  /* Loader */
+  /* 加载层 */
   .loader {
     position: fixed;
     inset: 0;
@@ -191,7 +197,7 @@
     text-transform: uppercase;
   }
 
-  /* Calibration panel */
+  /* 校准面板 */
   .calib {
     position: fixed;
     right: 16px;
@@ -226,7 +232,7 @@
   }
   .calib button:hover { background: rgba(200, 112, 63, 0.25); }
 
-  /* Debug overlay */
+  /* debug 浮层 */
   .debug {
     position: fixed;
     left: 16px;
@@ -249,16 +255,16 @@
 
   <div class="loader" id="loader">
     <div class="spinner"></div>
-    <div class="label">Loading...</div>
+    <div class="label">Loading…</div>
   </div>
 
   <div class="top-bar">
-    <div class="title">CuiMao<span class="dot"></span>AI</div>
+    <div class="title">BIG&nbsp;SISTER <span class="dot"></span> IS&nbsp;WATCHING&nbsp;YOU</div>
   </div>
 
   <div class="stage">
     <div class="portrait" id="portrait">
-      <img class="portrait-front" id="portraitFront" src="near.webp" alt="" decoding="async" />
+      <img class="portrait-front" id="portraitFront" src="frame_front.webp" alt="" decoding="async" />
     </div>
   </div>
 
@@ -273,16 +279,16 @@
   <div class="calib" id="calib">
     <div class="row">
       <span>校准角度偏移</span>
-      <b id="offsetVal">0&deg;</b>
-      <button data-d="-5">-5&deg;</button>
-      <button data-d="-1">-1&deg;</button>
-      <button data-d="1">+1&deg;</button>
-      <button data-d="5">+5&deg;</button>
+      <b id="offsetVal">0°</b>
+      <button data-d="-5">−5°</button>
+      <button data-d="-1">−1°</button>
+      <button data-d="1">+1°</button>
+      <button data-d="5">+5°</button>
       <button id="resetBtn">重置</button>
-      <button id="closeBtn">&times;</button>
+      <button id="closeBtn">×</button>
     </div>
     <div class="row" style="margin-top:6px; opacity:0.7;">
-      &larr; / &rarr; 微调 &middot; Shift+&larr; /&rarr; 加速 &middot; 按 C 切换 &middot; 按 D 调试
+      ← / → 微调 · Shift+← /→ 加速 · 按 C 切换 · 按 D 调试浮层
     </div>
   </div>
 
@@ -290,24 +296,103 @@
 (function () {
   'use strict';
 
-  // Sprite sheet: 4x4 = 16 directions
-  const COLS = 4;
-  const ROWS = 4;
+  // ============================================================
+  //  Sprite sheet 配置
+  //  布局：13 列 × 12 行 = 156 槽位，实际只用前 153 帧（视频帧数）
+  //  每帧 720×720（原视频分辨率），背景透明（绿幕 chromakey 抠出），
+  //  存为 sprite.webp。
+  // ============================================================
+  const COLS = 13;
+  const ROWS = 12;
+  const FRAMES = 153;
 
-  // Near mode threshold
+  // ============================================================
+  //  角度 → 帧号 查找表
+  //
+  //  以下 4 个锚点由用户根据视频内容直接标定（30 fps）：
+  //    -   0° 正上方 → frame  16  (= 0 秒 16 帧)
+  //    -  90° 正右方 → frame  55  (= 1 秒 25 帧)
+  //    - 180° 正下方 → frame  84  (= 2 秒 24 帧)
+  //    - 270° 正左方 → frame 109  (= 3 秒 19 帧)
+  //
+  //  视频里人物的旋转极不均匀：
+  //    - 0°→90°  用了 39 帧（上→右快）
+  //    - 90°→180° 用了 29 帧
+  //    - 180°→270° 用了 25 帧（下→左最快）
+  //    - 270°→0° 用了 63 帧（左→上慢）
+  //
+  //  其他角度用 4 个锚点之间的线性插值得到。
+  // ============================================================
+
+  const FRAME_UP   = 16;   // 正上方专用帧（用户指定）
+  const UP_WINDOW  = 20;   // ±20° 内锁定 FRAME_UP，消除小幅抖动闪烁
+
+  const ANGLE_KEYS = [
+    // 上 → 右：39 帧 / 90°
+    [ UP_WINDOW,  25 ],   // 20°
+    [ 30,  29 ],
+    [ 45,  36 ],
+    [ 60,  42 ],
+    [ 75,  49 ],
+    [ 90,  55 ],          // ★ 正右
+    // 右 → 下：29 帧 / 90°
+    [105,  60 ],
+    [120,  65 ],
+    [135,  70 ],
+    [150,  74 ],
+    [165,  79 ],
+    [180,  84 ],          // ★ 正下
+    // 下 → 左：25 帧 / 90°
+    [195,  88 ],
+    [210,  93 ],
+    [225,  97 ],
+    [240, 101 ],
+    [255, 105 ],
+    [270, 109 ],          // ★ 正左
+    // 左 → 上：63 帧 / 90°（视频最慢的一段，帧密度高）
+    [285, 116 ],
+    [300, 123 ],
+    [315, 130 ],
+    [330, 137 ],
+    [360 - UP_WINDOW, 141 ], // 340° 与窗口接续；frame 141 已是"上偏左"，视觉接近 FRAME_UP
+  ];
+
+  function angleToFrame(deg) {
+    deg = ((deg % 360) + 360) % 360;
+    if (deg >= 360 - UP_WINDOW || deg <= UP_WINDOW) return FRAME_UP;
+    for (let i = 0; i < ANGLE_KEYS.length - 1; i++) {
+      const [a0, f0] = ANGLE_KEYS[i];
+      const [a1, f1] = ANGLE_KEYS[i + 1];
+      if (deg >= a0 && deg <= a1) {
+        const t = (a1 === a0) ? 0 : (deg - a0) / (a1 - a0);
+        const f = f0 + (f1 - f0) * t;
+        return ((Math.round(f) % FRAMES) + FRAMES) % FRAMES;
+      }
+    }
+    return FRAME_UP;
+  }
+
+  // ============================================================
+  //  距离阈值：鼠标进入人物中心 18% 半径内时，才淡入显示高分辨率
+  //  正面凝视图（frame_front.webp）—— 小范围确保只在贴近脸部时触发。
+  // ============================================================
   const NEAR_RATIO = 0.18;
 
-  // DOM
-  const portraitEl = document.getElementById('portrait');
-  const frontEl = document.getElementById('portraitFront');
-  const cursorEl = document.getElementById('cursor');
-  const loaderEl = document.getElementById('loader');
-  const hintEl = document.getElementById('hint');
-  const calibEl = document.getElementById('calib');
-  const offsetVal = document.getElementById('offsetVal');
-  const debugEl = document.getElementById('debug');
+  // ============================================================
+  //  DOM
+  // ============================================================
+  const portraitEl  = document.getElementById('portrait');
+  const frontEl     = document.getElementById('portraitFront');
+  const cursorEl    = document.getElementById('cursor');
+  const loaderEl    = document.getElementById('loader');
+  const hintEl      = document.getElementById('hint');
+  const calibEl     = document.getElementById('calib');
+  const offsetVal   = document.getElementById('offsetVal');
+  const debugEl     = document.getElementById('debug');
 
-  // State
+  // ============================================================
+  //  状态
+  // ============================================================
   const params = new URLSearchParams(location.search);
   const urlOffsetDeg = parseFloat(params.get('offset'));
   let offsetDeg = Number.isFinite(urlOffsetDeg) ? urlOffsetDeg : 0;
@@ -316,7 +401,7 @@
   let mouseY = -1000;
 
   let portraitRect = null;
-  let lastDirection = -1;
+  let lastRenderedFrame = -1;
   let isNear = false;
   let renderScheduled = false;
 
@@ -324,21 +409,14 @@
   window.addEventListener('resize', updateRect);
   window.addEventListener('scroll', updateRect, { passive: true });
 
-  // Angle to direction: 16 directions, each 22.5 degrees
-  // atan2(dx, -dy): 0°=up, 90°=right, 180°=down, 270°=left (clockwise)
-  // Sprite index: 0=right, 1=down-right, ..., 12=up, ..., 15=up-right
-  function angleToDirection(deg) {
-    deg = ((deg % 360) + 360) % 360;
-    const raw = Math.floor((deg + 11.25) / 22.5) % 16;
-    // Map angle bins to sprite indices: up→12, right→0, down→4, left→8
-    return (raw + 12) % 16;
-  }
-
-  function setDirection(idx) {
-    if (idx === lastDirection) return;
-    lastDirection = idx;
+  // ============================================================
+  //  渲染
+  // ============================================================
+  function setFrame(idx) {
+    if (idx === lastRenderedFrame) return;
+    lastRenderedFrame = idx;
     const col = idx % COLS;
-    const row = Math.floor(idx / COLS);
+    const row = (idx / COLS) | 0;
     const px = (col / (COLS - 1)) * 100;
     const py = (row / (ROWS - 1)) * 100;
     portraitEl.style.backgroundPosition = `${px}% ${py}%`;
@@ -354,8 +432,8 @@
     renderScheduled = false;
     if (!portraitRect) updateRect();
 
-    const cx = portraitRect.left + portraitRect.width * 0.5;
-    const cy = portraitRect.top + portraitRect.height * 0.5;
+    const cx = portraitRect.left + portraitRect.width  * 0.5;
+    const cy = portraitRect.top  + portraitRect.height * 0.5;
     const dx = mouseX - cx;
     const dy = mouseY - cy;
     const dist = Math.hypot(dx, dy);
@@ -363,7 +441,9 @@
 
     if (dist < radius * NEAR_RATIO) {
       setNear(true);
-      setDirection(0);
+      // 让 sprite 背景也定位到 frame 0，以防 frame_front.webp 加载失败时
+      // 不至于显示一个错乱的视线方向；同时也是 frame_front 淡入前的兜底
+      setFrame(0);
       return;
     }
     setNear(false);
@@ -373,7 +453,7 @@
     deg = (deg + offsetDeg) % 360;
     if (deg < 0) deg += 360;
 
-    setDirection(angleToDirection(deg));
+    setFrame(angleToFrame(deg));
   }
 
   function scheduleRender() {
@@ -382,7 +462,9 @@
     requestAnimationFrame(render);
   }
 
-  // Pointer events
+  // ============================================================
+  //  指针事件
+  // ============================================================
   function setPointer(x, y) {
     mouseX = x;
     mouseY = y;
@@ -399,7 +481,7 @@
     mouseX = -1000;
     mouseY = -1000;
     setNear(true);
-    setDirection(0);
+    setFrame(0);
   });
 
   function touchHandler(e) {
@@ -408,7 +490,7 @@
     }
   }
   window.addEventListener('touchstart', touchHandler, { passive: true });
-  window.addEventListener('touchmove', touchHandler, { passive: true });
+  window.addEventListener('touchmove',  touchHandler, { passive: true });
 
   let hintFaded = false;
   function fadeHintOnce() {
@@ -417,9 +499,11 @@
     setTimeout(() => hintEl.classList.add('fade'), 1500);
   }
 
-  // Preload
+  // ============================================================
+  //  Sprite 与 front 图预加载
+  // ============================================================
   let spriteReady = false;
-  let frontReady = false;
+  let frontReady  = false;
 
   function tryHideLoader() {
     if (spriteReady && frontReady) {
@@ -429,22 +513,25 @@
   }
 
   const spriteImg = new Image();
-  spriteImg.onload = () => { spriteReady = true; tryHideLoader(); };
+  spriteImg.onload  = () => { spriteReady = true; tryHideLoader(); };
   spriteImg.onerror = () => { spriteReady = true; tryHideLoader(); };
   spriteImg.src = 'sprite.webp';
 
   if (frontEl.complete) { frontReady = true; }
   else {
-    frontEl.addEventListener('load', () => { frontReady = true; tryHideLoader(); });
+    frontEl.addEventListener('load',  () => { frontReady = true; tryHideLoader(); });
     frontEl.addEventListener('error', () => { frontReady = true; tryHideLoader(); });
   }
-
+  // 初始进入 NEAR 模式（鼠标尚未进入页面）
   setNear(true);
-  setDirection(0);
+  setFrame(0);
 
+  // 兜底：5 秒后无论如何隐藏 loader
   setTimeout(() => { spriteReady = frontReady = true; tryHideLoader(); }, 5000);
 
-  // Calibration
+  // ============================================================
+  //  校准面板
+  // ============================================================
   function setOffset(v) {
     offsetDeg = ((v % 360) + 360) % 360;
     if (offsetDeg > 180) offsetDeg -= 360;
@@ -463,21 +550,23 @@
 
   window.addEventListener('keydown', (e) => {
     const step = e.shiftKey ? 5 : 1;
-    if (e.key === 'ArrowLeft') { setOffset(offsetDeg - step); showCalib(true); e.preventDefault(); }
+    if (e.key === 'ArrowLeft')  { setOffset(offsetDeg - step); showCalib(true); e.preventDefault(); }
     if (e.key === 'ArrowRight') { setOffset(offsetDeg + step); showCalib(true); e.preventDefault(); }
     if (e.key === 'c' || e.key === 'C') { showCalib(!calibEl.classList.contains('show')); }
     if (e.key === 'd' || e.key === 'D') { debugEl.classList.toggle('hidden'); }
     if (e.key === '0') setOffset(0);
   });
 
-  // Debug
+  // ============================================================
+  //  Debug 浮层
+  // ============================================================
   if (params.get('debug') === '1') debugEl.classList.remove('hidden');
 
   function updateDebug() {
     if (debugEl.classList.contains('hidden')) return;
     debugEl.innerHTML =
       `mouse: ${Math.round(mouseX)}, ${Math.round(mouseY)}<br>` +
-      `direction: ${lastDirection} ${isNear ? '(NEAR)' : ''}<br>` +
+      `frame: ${lastRenderedFrame} ${isNear ? '(NEAR)' : ''}<br>` +
       `offset: ${offsetDeg.toFixed(1)}°<br>` +
       `sprite: ${spriteReady ? 'ok' : '...'} · front: ${frontReady ? 'ok' : '...'}`;
   }
